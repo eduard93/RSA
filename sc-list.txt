@@ -1,0 +1,4 @@
+<cspapp>/index.csp
+<cspapp>/jsencrypt.min.js
+REST.pkg
+ZAUTHENTICATE.mac

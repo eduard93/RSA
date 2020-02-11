@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+  <head>
+	<title>InterSystems IRIS - JavaScript RSA Encryption</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/2.3.1/jsencrypt.min.js"></script>
+	<script type="text/javascript">
+	
+	function getKey()
+	{
+		var xmlHttp = new XMLHttpRequest();
+		xmlHttp.onreadystatechange = function() { 
+			if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+				document.getElementById('pubkey').value = xmlHttp.responseText;
+		}
+		var url = '/auth/public/key';
+		xmlHttp.open("GET", url, true);
+		xmlHttp.send(null);
+	};
+	
+	function doAuth() {
+		// Encrypt with the public key...
+		var encrypt = new JSEncrypt();
+		encrypt.setPublicKey(document.getElementById('pubkey').value);
+		var encrypted = encrypt.encrypt(document.getElementById('user').value + "\n" + document.getElementById('pass').value + "\n" + new Date().toISOString());
+
+		var xmlHttp = new XMLHttpRequest();
+		
+		var url = '/auth/private/user';
+		xmlHttp.onreadystatechange = function() { 
+			if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+				document.getElementById('userVal').innerHTML = xmlHttp.responseText;
+		}
+		xmlHttp.open("GET", url, true);
+		xmlHttp.setRequestHeader("XAuth", encrypted)
+		xmlHttp.send(null);
+	}
+	
+	
+	</script>
+  </head>
+  <body>
+	<label for="pubkey">Public Key</label><br/>
+	<textarea id="pubkey" rows="15" cols="65"></textarea><input type="button" value="Get Key" onclick="getKey();" /><br/>
+
+ 
+	
+
+	User:<br>
+	<input id="user" type="text" name="user" value="_SYSTEM"><br>
+	Pass:<br>
+	<input id="pass"  type="password" name="pass" value="SYS"><br><br>
+	<input type="button" value="Auth" onclick="doAuth();" />
+
+	<br/><br/>
+	<label>Random: </label><label id="userVal"></label><br/>
+	
+  </body>
+</html>

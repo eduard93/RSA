@@ -1,0 +1,35 @@
+ZAUTHENTICATE(ServiceName,Namespace,Username,Password,Credentials,Properties) PUBLIC {
+	#include %occStatus
+	quit $$$OK
+}
+
+GetCredentials(ServiceName,Namespace,Username,Password,Credentials) Public {
+	#include %occErrors
+	#include %occStatus
+	
+	#dim separator As %Char = $c(10)
+	#dim %request As %CSP.Request
+
+	set ciphertext = %request.GetCgiEnv("HTTP_XAUTH")
+
+	quit:ciphertext="" $$$ERROR($$$GeneralError, "No XAuth header")
+
+	set text = $SYSTEM.Encryption.RSADecrypt($system.Encryption.Base64Decode(ciphertext), ##class(REST.Keys).#PRIVATEKEY,"",2)
+
+	quit:text="" $$$ERROR($$$GeneralError, "Unable to decrypt")
+	quit:$l(text,separator)'=3 $$$ERROR($$$GeneralError, "Wrong plaintext structure")
+	
+	set time = $p(text, separator, 3)
+	
+	set limit = 10
+	set diff = $system.SQL.DATEDIFF("s", $tr(time,"TZ", "  "), $SYSTEM.Util.LocalWithZTIMEZONEtoUTC($H))
+	quit:diff>limit $$$ERROR($$$GeneralError, "Old request:" _ diff)
+	
+	set Username = $p(text, separator, 1)
+	set Password = $p(text, separator, 2)
+	
+	//set ^dev = $lb(ciphertext, text, $SYSTEM.Encryption.RSAGetLastError(), Username, Password)
+	
+	quit $$$OK
+ }
+ 
